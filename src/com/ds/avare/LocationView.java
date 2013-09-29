@@ -324,6 +324,8 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         mCurrTouchPoint = new PointInfo();
         
         mGestureDetector = new GestureDetector(context, new GestureListener());
+        
+        mPositionHistory = new LinkedList<Coordinate>();
     }
     
     /**
