@@ -623,12 +623,14 @@ Redistribution and use in source and binary forms, with or without modification,
     <string-array name="UnitsD">
         <item>Nautical Miles</item>
         <item>Statute Miles</item>
-    </string-array>
+        <item>Kilometers</item>
+        </string-array>
 
     <string-array name="UnitsDValues">
         <item>0</item>
         <item>1</item>
-    </string-array>       
+        <item>2</item>
+        </string-array>       
     
     <string-array name="Server">
         <item>Apps4av.com</item>

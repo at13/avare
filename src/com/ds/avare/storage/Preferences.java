@@ -101,7 +101,14 @@ public class Preferences {
             heightConversion = 3.28;
             earthRadiusConversion = 3963.1676;            
             distanceConversionUnit = "mi";
-            speedConversionUnit = "mh";
+            speedConversionUnit = "mph";
+        }
+        else if(getDistanceUnit().equals("km")) {
+            distanceConversion = 3.6; // m/s to kph
+            heightConversion = 3.28;
+            earthRadiusConversion = 6378.09999805;            
+            distanceConversionUnit = "km";
+            speedConversionUnit = "kph";
         }
         String path = mPref.getString(mContext.getString(R.string.Maps), null);
         if(null == path) {
@@ -524,10 +531,10 @@ public class Preferences {
         String val = mPref.getString(mContext.getString(R.string.Units), "0");
         if(val.equals("0")) {
             return ("kt");
-        }
-        else {
+        } else if(val.equals("1")){
             return ("mi");
-        }
+        } else 
+        	return ("km");
     }
 
     /**
