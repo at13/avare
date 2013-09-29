@@ -1014,9 +1014,9 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * @param canvas
      */
     private void drawDistanceRings(Canvas canvas) {
-    	final int Ring1x[] = { 280, 140,  70,  35};
-    	final int Ring2x[] = { 560, 280, 140,  70};
-    	final int Ring3x[] = {1140, 560, 280, 140};
+    	final int Ring1x[] = { 320, 160,  80,  40};
+    	final int Ring2x[] = { 640, 320, 160,  80};
+    	final int Ring3x[] = {1280, 640, 320, 160};
     	final String Ring1Text[] = {"10", "5",  "2.5", "1.25"};
     	final String Ring2Text[] = {"20", "10", "5",   "2.5"};
     	final String Ring3Text[] = {"40", "20", "10",  "5"};
