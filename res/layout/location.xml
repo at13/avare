@@ -173,9 +173,10 @@ Redistribution and use in source and binary forms, with or without modification,
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_below="@+id/location_button_pref"
-            android:text="@string/Track"
-            android:textOff="@string/Track"
-            android:textOn="@string/Track" />
+            android:textStyle="bold"
+            android:text="@string/Tracks"
+            android:textOff="@string/Tracks"
+            android:textOn="@string/Tracks" />
 
 </RelativeLayout>
 

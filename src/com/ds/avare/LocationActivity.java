@@ -451,7 +451,7 @@ public class LocationActivity extends Activity implements Observer {
 
             @Override
             public void onClick(View v) {
-                AnimateButton s = new AnimateButton(getApplicationContext(), mSimButton, AnimateButton.DIRECTION_R_L);
+                AnimateButton s = new AnimateButton(getApplicationContext(), mSimButton, AnimateButton.DIRECTION_R_L, mTracksButton);
                 AnimateButton z = new AnimateButton(getApplicationContext(), mZoom, AnimateButton.DIRECTION_R_L);
                 AnimateButton t = new AnimateButton(getApplicationContext(), mTrackButton, AnimateButton.DIRECTION_R_L);
                 AnimateButton c = new AnimateButton(getApplicationContext(), mChartSpinner, AnimateButton.DIRECTION_R_L, (View[])null);
