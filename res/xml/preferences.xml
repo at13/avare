@@ -110,4 +110,10 @@ Redistribution and use in source and binary forms, with or without modification,
         android:title="@string/ShowDistanceRingsLabel"
         android:summary="@string/ShowDistanceRingsSummary"
         android:defaultValue="false"/>
+    <PreferenceScreen android:title="Realtime Tracking Options" android:summary="Options to control frequency and modes of recording positions">
+        <CheckBoxPreference android:key="@string/TrkUpdAllow" android:title="@string/TrkUpdAllowLabel" android:summary="@string/TrkUpdAllowSummary"/>
+        <CheckBoxPreference android:key="@string/TrkUpdShowHistory" android:title="@string/TrkUpdShowHistoryLabel" android:summary="@string/TrkUpdShowHistorySummary"/>
+        <ListPreference android:entries="@array/LocationIntervalPrompt" android:summary="@string/TrkUpdTimSummary" android:title="@string/TrkUpdTimLabel" android:key="@string/TrkUpdTim" android:entryValues="@array/LocationIntervalValue"/>
+        <ListPreference android:entryValues="@array/SpeedIntervalValue" android:entries="@array/SpeedIntervalPrompt" android:summary="@string/TrkUpdSpdSummary" android:title="@string/TrkUpdSpdLabel" android:key="@string/TrkUpdSpd"/>
+    </PreferenceScreen>
 </PreferenceScreen>

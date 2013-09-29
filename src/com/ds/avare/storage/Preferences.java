@@ -561,5 +561,24 @@ public class Preferences {
         return(mPref.getBoolean(mContext.getString(R.string.ShowDistanceRings), false));
     }
 
+    public boolean shouldDrawTracks() {
+        return(mPref.getBoolean(mContext.getString(R.string.TrkUpdShowHistory), false));
+    }
+
+    public int getTrackUpdateTime() {
+    	try {
+    		return(Integer.parseInt(mPref.getString(mContext.getString(R.string.TrkUpdTim), "15")));
+    	} catch (NumberFormatException x) {
+    		return 15;
+    	}
+    }
+
+    public int getTrackUpdateSpeed() {
+    	try {
+    		return(Integer.parseInt(mPref.getString(mContext.getString(R.string.TrkUpdSpd), "5")));
+		} catch (NumberFormatException x) {
+			return 5;
+		}
+    }
 }
 

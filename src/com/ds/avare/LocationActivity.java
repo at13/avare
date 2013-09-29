@@ -98,6 +98,7 @@ public class LocationActivity extends Activity implements Observer {
     private Button mDestButton;
     private Button mCenterButton;
     private Button mDrawClearButton;
+    private Button mTracksButton;
     private Button mHelpButton;
     private Button mPrefButton;
     private Button mPlanButton;
@@ -638,6 +639,19 @@ public class LocationActivity extends Activity implements Observer {
                 }
             }
             
+        });
+
+        /*
+         * The tracking button handler. Enable/Disable the saving of track points
+         * to a KML file
+         */
+        mTracksButton = (Button)view.findViewById(R.id.location_button_tracks);
+        mTracksButton.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+            	mLocationView.setTracks(!mLocationView.getTracks());
+            }            
         });
 
         /*

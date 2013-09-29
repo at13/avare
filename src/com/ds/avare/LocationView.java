@@ -13,13 +13,22 @@ Redistribution and use in source and binary forms, with or without modification,
 package com.ds.avare;
 
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.ds.avare.gdl90.NexradBitmap;
 import com.ds.avare.gps.GpsParams;
 import com.ds.avare.place.Destination;
 import com.ds.avare.place.Obstacle;
 import com.ds.avare.place.Runway;
+import com.ds.avare.position.Coordinate;
 import com.ds.avare.position.Movement;
 import com.ds.avare.position.Origin;
 import com.ds.avare.position.Pan;
@@ -51,6 +60,7 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -217,6 +227,44 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     private static final int TEXT_COLOR = Color.WHITE; 
     private static final int TEXT_COLOR_OPPOSITE = Color.BLACK; 
     
+    /*
+     * Are we recording the tack points ? 
+     */
+    static final String     strTracks = "Tracks";	// For logging
+    private boolean	        mTracks;				// true when we are actively writing tracks
+    private BufferedWriter  mTracksFile;			// File handle to use for writing the data
+    private File            mFile;					// core file handler
+    private Timer           mTimer;					// background timer task object
+    private static final String mKMLFilePrefix = 
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+			"<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
+			"	<Document>\n" +
+			"		<name>Flight Data by Avare</name>\n" +
+			"		<Style id=\"AircraftFlight\">\n" +
+			"			<LineStyle>\n" +
+			"				<color>ffff00ff</color>\n" +
+			"				<width>4</width>\n" +
+			"			</LineStyle>\n" +
+			"			<PolyStyle>\n" +
+			"				<color>7fcccccc</color>\n" +
+			"			</PolyStyle>\n" +
+			"		</Style>\n" +
+			"		<Placemark>\n" +
+			"			<name>Avare Flight Path</name>\n" +
+			"			<visibility>1</visibility>\n" +
+			"			<description>3-D Flight Position Data</description>\n" +
+			"			<styleUrl>#AircraftFlight</styleUrl>\n" +
+			"			<LineString>\n" +
+			"				<extrude>1</extrude>\n" +
+			"				<altitudeMode>absolute</altitudeMode>\n" +
+			"				<coordinates>\n";
+    private static final String mKMLFileSuffix = 
+            "				</coordinates>\n" +
+    		"			</LineString>\n" +
+    		"		</Placemark>\n" +
+    		"	</Document>\n" +
+    		"</kml>\n";
+    LinkedList<Coordinate> mPositionHistory;		// Stored points for display on the chart
 
     /**
      * @param context
@@ -1021,7 +1069,75 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         	mPaint.setTextSize(oldSize);
         }
     }
-    
+
+    /**
+     * Draw the tracks to show our previous positions. If tracking is enabled, there is
+     * a linked list of gps coordinates attached to this view with the most recent one at the end
+     * of that list. Start at the end value to being the drawing and as soon as we find one that is 
+     * not in the range of this display, we can assume that we're done.
+     * @param canvas
+     */
+    private void drawTracks(Canvas canvas) {
+    	// Some pre-conditions that would prevent us from drawing anything
+    	//
+        if(mPref.shouldDrawTracks() && mPositionHistory != null) {
+            if((mPositionHistory.size() > 1) && (null == mPointProjection)) {
+            	if(mService == null){
+            		return;
+            	}
+
+                // Get the position point at the end of the list. This is our starting 
+                // location. From here, search backward until we find the first location
+                // that is in the current display range.
+            	//
+                int idx = 0;
+                for (idx = mPositionHistory.size() - 1; idx > 0; idx--) {
+                	if (mOrigin.isInDisplayRange(mPositionHistory.get(idx)) == true)
+                		break;
+                }
+
+                // If no points are found in range, then there is nothing to plot
+                //
+                if (idx == 0) 
+                	return;
+                
+            	// Set the brush color and width
+            	//
+            	mPaint.setColor(Color.MAGENTA);
+                mPaint.setStrokeWidth(5);
+            	mPaint.setStyle(Paint.Style.FILL);
+
+                // Get the first visible GPS point to start at
+            	//
+                Coordinate gpsPos1 = mPositionHistory.get(idx);
+            	for( ; idx >= 0; idx--) {
+            		
+            		// Get the next position to draw to
+            		//
+            		Coordinate gpsPos2 = mPositionHistory.get(idx);
+            		
+            		// Check the location against our display bounds. If this point is still on our 
+            		// display area then it is OK to draw the line. If it is out of bounds, assume that 
+            		// we are done with our plotting
+            		//
+            		if(mOrigin.isInDisplayRange(gpsPos2)) {
+        	            float x1 = (float)(mOrigin.getOffsetX(gpsPos1.getLongitude()));
+        	            float y1 = (float)(mOrigin.getOffsetY(gpsPos1.getLatitude()));                        
+
+        	            float x2 = (float)(mOrigin.getOffsetX(gpsPos2.getLongitude()));
+        	            float y2 = (float)(mOrigin.getOffsetY(gpsPos2.getLatitude()));                        
+
+        	            canvas.drawLine(x1, y1, x2, y2, mPaint);
+
+        	            // Set the end point as our new start point and do this all again
+        	            //
+        	            gpsPos1 = gpsPos2;
+            		} else return; // Point is out of range, we are done
+            	}
+            }
+        }
+    }
+
     /**
      * @param canvas
      * Does pretty much all drawing on screen
@@ -1049,6 +1165,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         drawObstacles(canvas);
         drawAircraft(canvas);
         drawDistanceRings(canvas);	// Circles showing distance from current position
+        drawTracks(canvas);			// Historical positions
         if(mTrackUp) {
             canvas.restore();
         }
@@ -1560,5 +1677,108 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         }
         
         return changed;
+    }
+
+    /* 
+     * Task to write our current position to a file. If the mTracksFile is open, then just write out the long,lat,alt \n 
+     * to that file IF our current speed is non zero. This is set up to be called every 15 seconds. Google wants altitude in meters.
+     */
+    private class addPositionToKMLTask extends TimerTask {
+
+        public void run() {
+        	Log.i (strTracks, "run() called");
+        	if(mTracksFile!= null) {
+        		if(mGpsParams.getSpeed() >= mPref.getTrackUpdateSpeed()) {
+        			try {
+        				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + mGpsParams.getLatitude() + "," + (mGpsParams.getAltitude() * .3048) + "\n");
+        				Coordinate gpsPosition = new Coordinate(mGpsParams.getLongitude(), mGpsParams.getLatitude());
+        				mPositionHistory.add(gpsPosition);
+        				Log.i(strTracks, "Writing track point");
+        			} catch (IOException ioe) { Log.e(strTracks, ioe.toString()); }
+        		}
+        	}
+        }
+    }
+
+    /**
+     * 
+     * @param b
+     */
+    public void setTracks(boolean b) {
+    	// Set our tracking state
+    	//
+    	mTracks = b;
+        Log.i(strTracks, (mTracks == true ? "Enable tracks" : "Disable Tracks"));
+        
+        /*
+         * Irrespective of enable/disable, we need to close the current tracks file if it is
+         * already open
+         */
+    	if(mTracksFile != null) {
+    		// Close the file
+    		// Turn off the timer for running the background thread
+    		//
+    		try {
+        		mTracksFile.write(mKMLFileSuffix);
+    			mTracksFile.close();
+    			if(mTimer != null) 
+    				mTimer.cancel();
+    		} catch (IOException ioe) { Log.e(strTracks, ioe.getMessage()); }
+
+    		// Clear out our control objects
+    		//
+    		mTracksFile = null;
+    		mTimer = null;
+    		Log.i(strTracks, "Tracks file closed.");
+    	}
+
+    	/* 
+    	 * If we are turning tracks on, then we can create/open a new file to hold the points.
+    	 * Start the thread timer for the configured interval.
+    	 */
+    	if(mTracks == true) {
+    		
+    		// Build the file name based upon the current date/time
+    		//
+    		String fileName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime()) + ".KML";
+        	mFile = new File(mPref.mapsFolder(), fileName);
+        	Log.i(strTracks, "Attempt new track file: " + fileName);
+
+        	// File handling can throw some exceptions
+        	//
+        	try {
+        		
+        		// If the file does not exist, then create it. Get some
+        		// writer objects from it
+        		//
+            	if(mFile.exists() == false){
+            		mFile.createNewFile();
+            	}
+            	FileWriter fileWriter = new FileWriter(mFile);
+        		mTracksFile = new BufferedWriter(fileWriter, 8192);
+
+        		// Write out the opening file prefix
+        		//
+        		mTracksFile.write(mKMLFilePrefix);
+
+        		// Start a timer task that runs a thread in the background to
+        		// record each position at the configured interval
+        		//
+                mTimer = new Timer();	// Create a timer for writing the tracks
+                TimerTask taskTracks = new addPositionToKMLTask();	// The task thread that does the work
+                mTimer.scheduleAtFixedRate(taskTracks, 0, mPref.getTrackUpdateTime() * 1000);	// Set to run at the configured number of seconds
+
+        		Log.i(strTracks, mFile.getPath() + " file opened.");
+        		Log.i(strTracks, "Save location every " + mPref.getTrackUpdateTime() + " seconds when faster than " + mPref.getTrackUpdateSpeed());
+        	} catch (IOException ioe) { Log.e(strTracks, ioe.getMessage()); }
+        }
+    }
+
+    /**
+     * 
+     * @param b
+     */
+    public boolean getTracks() {
+        return mTracks;
     }
 }

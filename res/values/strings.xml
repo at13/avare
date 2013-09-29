@@ -163,4 +163,17 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="ShowDistanceRings">&quot;Show Distance Rings&quot;</string>
     <string name="ShowDistanceRingsLabel">&quot;Show Distance Rings&quot;</string>
     <string name="ShowDistanceRingsSummary">&quot;Select to display distance rings around current location.&quot;</string>
+    <string name="Track">Track</string>
+    <string name="TrkUpdTim">&quot;TrkUpdTim&quot;</string>
+    <string name="TrkUpdTimLabel">&quot;Track Update Time Interval&quot;</string>
+    <string name="TrkUpdTimSummary">&quot;Select the timer interval that positions will be saved.&quot;</string>
+    <string name="TrkUpdSpd">&quot;TrkUpdSpd&quot;</string>
+    <string name="TrkUpdSpdLabel">&quot;Track Update Speed Threshold&quot;</string>
+    <string name="TrkUpdSpdSummary">&quot;Enter the speed at which to begin tracking position points.&quot;</string>
+    <string name="TrkUpdAllow">TrkUpdAllow</string>
+    <string name="TrkUpdAllowLabel">&quot;Enable Position Tracking&quot;</string>
+    <string name="TrkUpdAllowSummary">&quot;Enable to allow position tracking to be recorded. (requires restart)&quot;</string>
+    <string name="TrkUpdShowHistory">TrkUpdShowHistory</string>
+    <string name="TrkUpdShowHistoryLabel">&quot;Display Track History&quot;</string>
+    <string name="TrkUpdShowHistorySummary">&quot;Display the flight path track on the active chart.&quot;</string>
 </resources>
