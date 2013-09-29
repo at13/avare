@@ -105,4 +105,9 @@ Redistribution and use in source and binary forms, with or without modification,
         android:title="@string/IconHelicopterLabel"
         android:summary="@string/IconHelicopterSummary"
         android:defaultValue="false"/>
+    <CheckBoxPreference
+        android:key="@string/ShowDistanceRings"
+        android:title="@string/ShowDistanceRingsLabel"
+        android:summary="@string/ShowDistanceRingsSummary"
+        android:defaultValue="false"/>
 </PreferenceScreen>

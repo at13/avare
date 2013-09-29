@@ -557,4 +557,9 @@ public class Preferences {
         return(mPref.getString(name, null));
     }
 
+    public boolean showDistanceRings() {
+        return(mPref.getBoolean(mContext.getString(R.string.ShowDistanceRings), false));
+    }
+
 }
+

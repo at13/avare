@@ -160,4 +160,7 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="adsbSummary">&quot;Use a compatible ADS-B receiver instead of the built in GPS&quot;</string>
     <string name="noZoomIn">&quot;Cannot zoom in further&quot;</string>
     <string name="noZoomOut">&quot;Cannot zoom out further&quot;</string>
+    <string name="ShowDistanceRings">&quot;Show Distance Rings&quot;</string>
+    <string name="ShowDistanceRingsLabel">&quot;Show Distance Rings&quot;</string>
+    <string name="ShowDistanceRingsSummary">&quot;Select to display distance rings around current location.&quot;</string>
 </resources>
