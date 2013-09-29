@@ -1075,7 +1075,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     /**
      * Draw the tracks to show our previous positions. If tracking is enabled, there is
      * a linked list of gps coordinates attached to this view with the most recent one at the end
-     * of that list. Start at the end value to being the drawing and as soon as we find one that is 
+     * of that list. Start at the end value to begin the drawing and as soon as we find one that is 
      * not in the range of this display, we can assume that we're done.
      * @param canvas
      */
