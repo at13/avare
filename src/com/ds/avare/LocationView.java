@@ -60,7 +60,6 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -1688,15 +1687,13 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     private class addPositionToKMLTask extends TimerTask {
 
         public void run() {
-        	Log.i (strTracks, "run() called");
         	if(mTracksFile!= null) {
         		if(mGpsParams.getSpeed() >= mPref.getTrackUpdateSpeed()) {
         			try {
         				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + mGpsParams.getLatitude() + "," + (mGpsParams.getAltitude() * .3048) + "\n");
         				Coordinate gpsPosition = new Coordinate(mGpsParams.getLongitude(), mGpsParams.getLatitude());
         				mPositionHistory.add(gpsPosition);
-        				Log.i(strTracks, "Writing track point");
-        			} catch (IOException ioe) { Log.e(strTracks, ioe.toString()); }
+        			} catch (IOException ioe) { }
         		}
         	}
         }
@@ -1710,7 +1707,6 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     	// Set our tracking state
     	//
     	mTracks = b;
-        Log.i(strTracks, (mTracks == true ? "Enable tracks" : "Disable Tracks"));
         
         /*
          * Irrespective of enable/disable, we need to close the current tracks file if it is
@@ -1725,13 +1721,12 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     			mTracksFile.close();
     			if(mTimer != null) 
     				mTimer.cancel();
-    		} catch (IOException ioe) { Log.e(strTracks, ioe.getMessage()); }
+    		} catch (IOException ioe) { }
 
     		// Clear out our control objects
     		//
     		mTracksFile = null;
     		mTimer = null;
-    		Log.i(strTracks, "Tracks file closed.");
     	}
 
     	/* 
@@ -1744,7 +1739,6 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     		//
     		String fileName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime()) + ".KML";
         	mFile = new File(mPref.mapsFolder(), fileName);
-        	Log.i(strTracks, "Attempt new track file: " + fileName);
 
         	// File handling can throw some exceptions
         	//
@@ -1770,9 +1764,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
                 TimerTask taskTracks = new addPositionToKMLTask();	// The task thread that does the work
                 mTimer.scheduleAtFixedRate(taskTracks, 0, mPref.getTrackUpdateTime() * 1000);	// Set to run at the configured number of seconds
 
-        		Log.i(strTracks, mFile.getPath() + " file opened.");
-        		Log.i(strTracks, "Save location every " + mPref.getTrackUpdateTime() + " seconds when faster than " + mPref.getTrackUpdateSpeed());
-        	} catch (IOException ioe) { Log.e(strTracks, ioe.getMessage()); }
+        	} catch (IOException ioe) { }
         }
     }
 
