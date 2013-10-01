@@ -33,14 +33,16 @@ public class HobbsMeter {
     private class HobbsTask extends TimerTask {
 
         public void run() {
-        	mHundredths++;
-        	if(mHundredths > 9) {
-        		mHundredths = 0;
-        		mTenths++;
-        		if(mTenths > 9) {
-        			mTenths = 0;
-        			mHours++;
-        		}
+        	synchronized(this) {
+	        	mHundredths++;
+	        	if(mHundredths > 9) {
+	        		mHundredths = 0;
+	        		mTenths++;
+	        		if(mTenths > 9) {
+	        			mTenths = 0;
+	        			mHours++;
+	        		}
+	        	}
         	}
         }
     }
@@ -91,9 +93,11 @@ public class HobbsMeter {
 	 * Reset this HOBBS meter to empty
 	 */
 	public void reset() {
-    	mHundredths = 0;
-    	mTenths = 0;
-    	mHours = 0;
+		synchronized (this) {	// Don't want the timer event to fire and
+	    	mHundredths = 0;	// adjust any of these values until we have
+	    	mTenths = 0;		// them all cleared
+	    	mHours = 0;
+		}
 	}
 	
 	/**

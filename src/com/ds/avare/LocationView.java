@@ -713,7 +713,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
             if(mFlightTimer.isRunning() == true) {	// If it's running (we are flying)...
             	mPaint.setColor(Color.GREEN);		// ...then paint the text in green
             } else {								// otherwise
-            	mPaint.setColor(Color.YELLOW);		// paint in yellow (not flying)
+            	mPaint.setColor(TEXT_COLOR);		// paint in normal white (not flying)
             }
         	canvas.drawText(mFlightTimer.getValue(), getWidth() / 2, getHeight() / mTextDiv, mPaint);
         }
