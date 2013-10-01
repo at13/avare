@@ -587,5 +587,9 @@ public class Preferences {
 			return 5;
 		}
     }
+
+    public boolean useFlightTimer() {
+        return(mPref.getBoolean(mContext.getString(R.string.UseFlightTimer), false));
+    }
 }
 

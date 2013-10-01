@@ -116,4 +116,9 @@ Redistribution and use in source and binary forms, with or without modification,
         <ListPreference android:entries="@array/LocationIntervalPrompt" android:summary="@string/TrkUpdTimSummary" android:title="@string/TrkUpdTimLabel" android:key="@string/TrkUpdTim" android:entryValues="@array/LocationIntervalValue"/>
         <ListPreference android:entryValues="@array/SpeedIntervalValue" android:entries="@array/SpeedIntervalPrompt" android:summary="@string/TrkUpdSpdSummary" android:title="@string/TrkUpdSpdLabel" android:key="@string/TrkUpdSpd"/>
     </PreferenceScreen>
+    <CheckBoxPreference
+        android:key="@string/UseFlightTimer"
+        android:title="@string/UseFlightTimerLabel"
+        android:summary="@string/UseFlightTimerSummary"
+        android:defaultValue="false"/>
 </PreferenceScreen>
