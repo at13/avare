@@ -22,12 +22,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.annotation.SuppressLint;
-import com.ds.avare.LocationView;
 import com.ds.avare.gps.GpsParams;
 
 public class KMLRecorder {
-	private LocationView 	mLV;					// Link back to location view for GPS and prefs
-    private BufferedWriter  mTracksFile;			// File handle to use for writing the data
+	private long			mStartSpeed;
+	private GpsParams		mGpsParams;
+	private BufferedWriter  mTracksFile;			// File handle to use for writing the data
     private File            mFile;					// core file handler
     private Timer           mTimer;					// background timer task object
     private LinkedList<Coordinate> mPositionHistory;// Stored GPS points 
@@ -70,21 +70,21 @@ public class KMLRecorder {
     private class addPositionToKMLTask extends TimerTask {
 
         public void run() {
-        	if(mTracksFile!= null) {
-        		GpsParams gpsParams = mLV.getGpsParams();
-        		if(gpsParams.getSpeed() >= mLV.getPref().getTrackUpdateSpeed()) {
-        			try {
-        				mTracksFile.write ("\t\t\t\t\t" + gpsParams.getLongitude() + "," + gpsParams.getLatitude() + "," + (gpsParams.getAltitude() * .3048) + "\n");
-        				Coordinate gpsPosition = new Coordinate(gpsParams.getLongitude(), gpsParams.getLatitude());
-        				mPositionHistory.add(gpsPosition);
-        			} catch (IOException ioe) { }
-        		}
+        	synchronized(this) {
+	        	if((mTracksFile!= null) && (mGpsParams != null)) {
+	        		if(mGpsParams.getSpeed() >= mStartSpeed) {
+	        			try {
+	        				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + mGpsParams.getLatitude() + "," + (mGpsParams.getAltitude() * .3048) + "\n");
+	        				Coordinate gpsPosition = new Coordinate(mGpsParams.getLongitude(), mGpsParams.getLatitude());
+	        				mPositionHistory.add(gpsPosition);
+	        			} catch (IOException ioe) { }
+	        		}
+	        	}
         	}
         }
     }
 
-    public KMLRecorder(LocationView lv){
-    	mLV = lv;
+    public KMLRecorder(){
     	mPositionHistory = new LinkedList<Coordinate>();
     }
     
@@ -116,12 +116,12 @@ public class KMLRecorder {
     }
     
     @SuppressLint("SimpleDateFormat")
-	public void start() {
+	public void start(String folder, long updateTime) {
 			
 		// Build the file name based upon the current date/time
 		//
 		String fileName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime()) + ".KML";
-    	mFile = new File(mLV.getPref().mapsFolder(), fileName);
+    	mFile = new File(folder, fileName);
 
     	// File handling can throw some exceptions
     	//
@@ -145,7 +145,7 @@ public class KMLRecorder {
     		//
             mTimer = new Timer();	// Create a timer for writing the tracks
             TimerTask taskTracks = new addPositionToKMLTask();	// The task thread that does the work
-            mTimer.scheduleAtFixedRate(taskTracks, 0, mLV.getPref().getTrackUpdateTime() * 1000);	// Set to run at the configured number of seconds
+            mTimer.scheduleAtFixedRate(taskTracks, 0, updateTime * 1000);	// Set to run at the configured number of seconds
 
     	} catch (IOException ioe) { }
     }
@@ -156,5 +156,11 @@ public class KMLRecorder {
     
     public void clearPositionHistory() {
     	mPositionHistory.clear();
+    }
+    
+    public void setGpsParams(GpsParams gpsParams) {
+    	synchronized(this) {
+    		mGpsParams = gpsParams;
+    	}
     }
 }

@@ -282,8 +282,8 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         
         mGestureDetector = new GestureDetector(context, new GestureListener());
         
-        mFlightTimer = new FlightTimer(this);
-        mKMLRecorder = new KMLRecorder(this);
+        mFlightTimer = new FlightTimer();
+        mKMLRecorder = new KMLRecorder();
     }
     
     /**
@@ -1200,6 +1200,9 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
          */
         mGpsParams = params;
 
+        mFlightTimer.setSpeed(mGpsParams.getSpeed());	// Tell the timer how fast we are going
+        mKMLRecorder.setGpsParams(mGpsParams);			// Tell the KML recorder where we are
+        
         tfrReset();
         /*
          * Database query for new location / pan location.
@@ -1674,7 +1677,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      */
     public void setTracks(boolean b) {
         if(b == true)
-        	mKMLRecorder.start();
+        	mKMLRecorder.start(mPref.mapsFolder(), mPref.getTrackUpdateTime());
         else
         	mKMLRecorder.stop();
     }

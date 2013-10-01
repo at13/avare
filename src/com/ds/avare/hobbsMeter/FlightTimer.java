@@ -14,8 +14,6 @@ package com.ds.avare.hobbsMeter;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.ds.avare.LocationView;
-
 /**
  * Flight timer class. Extension of the HobbsMeter. It starts/stops the hobbs meter when
  * the detected ground speed is greater than a specified value. Yes, flying IN to a strong
@@ -24,12 +22,11 @@ import com.ds.avare.LocationView;
  *
  */
 public class FlightTimer extends HobbsMeter {
-	Timer		 mTimer;
-	LocationView mLV;
-	int 		 mMinFlightSpeed = 30;	// 30 mph/kph/kts means we are flying
+	private Timer		 mTimer;
+	private double 		 mMinFlightSpeed = 30;	// 30 mph/kph/kts means we are flying
+	private double		 mSpeed = 0;
 	
-	public FlightTimer(LocationView lv) {
-		mLV = lv;					// The main Location screen view, used to get the GpsParameters
+	public FlightTimer() {
         mTimer = new Timer();							// Create a timer for a thread to monitor the GPS speed
         TimerTask timerTask = new FlightTimerTask();	// The task thread that does the work
         mTimer.scheduleAtFixedRate(timerTask, 0, 1000);	// Set to run once per second
@@ -40,15 +37,23 @@ public class FlightTimer extends HobbsMeter {
      */
     private class FlightTimerTask extends TimerTask {
         public void run() {
-        	if(mLV.getGpsParams().getSpeed() >= mMinFlightSpeed) {	// Are we flying ?
-        		if(isRunning() == true)					// If hobbs already running... 
-        			return;								// ...then nothing to do
-        		start();								// Otherwise start the hobbs
+    		if(mSpeed >= mMinFlightSpeed) {	// Are we flying ?
+        		if(isRunning() == true)		// If hobbs already running... 
+        			return;					// ...then nothing to do
+        		start();					// Otherwise start the hobbs
         	} else {						// We are no longer flying
         		if(isRunning() == false)	// Do we need to stop the hobbs ? 
         			return;					// no, just return
         		stop();						// yes - stop it here
         	}
         }
+    }
+    
+    public void setSpeed(double speed) {
+    	mSpeed = speed;
+    }
+    
+    public void setMinFlightSpeed(double minFlightSpeed) {
+    	mMinFlightSpeed = minFlightSpeed;
     }
 }
