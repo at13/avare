@@ -611,7 +611,15 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * @param canvas
      */
     private void drawCornerTexts(Canvas canvas) {
-
+    	
+    	// How many lines will contain text on the top, this dictates
+    	// how large the shadow is
+    	//
+    	int shadowLineCount = 2;
+    	if(mPref.useFlightTimer()) {
+    		shadowLineCount = 3;
+    	}
+    	
         /*
          * Misc text in the information text location on the view like GPS status,
          * Maps status, and point destination/destination bearing, altitude, ...
@@ -621,7 +629,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
             mPaint.setShadowLayer(0, 0, 0, 0);
             mPaint.setColor(TEXT_COLOR_OPPOSITE);
             mPaint.setAlpha(0x7f);
-            canvas.drawRect(0, 0, getWidth(), getHeight() / mTextDiv * 2 + SHADOW, mPaint);            
+            canvas.drawRect(0, 0, getWidth(), getHeight() / mTextDiv * shadowLineCount + SHADOW, mPaint);            
             mPaint.setAlpha(0xff);
         }
         mPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
@@ -709,13 +717,13 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         // current value top center.
         //
         if(mPref.useFlightTimer()) {
-            mPaint.setTextAlign(Align.CENTER);
+            mPaint.setTextAlign(Align.RIGHT);
             if(mFlightTimer.isRunning() == true) {	// If it's running (we are flying)...
             	mPaint.setColor(Color.GREEN);		// ...then paint the text in green
             } else {								// otherwise
             	mPaint.setColor(TEXT_COLOR);		// paint in normal white (not flying)
             }
-        	canvas.drawText(mFlightTimer.getValue(), getWidth() / 2, getHeight() / mTextDiv, mPaint);
+        	canvas.drawText(mFlightTimer.getValue(), getWidth(), getHeight() / mTextDiv * 3, mPaint);
         }
     }
 
@@ -1184,13 +1192,6 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         dbquery(true);        
     }
 
-    public GpsParams getGpsParams() {
-    	return mGpsParams;
-    }
-
-    public Preferences getPref() {
-    	return mPref;
-    }
     /**
      * @param params
      */
@@ -1202,7 +1203,6 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 
         mFlightTimer.setSpeed(mGpsParams.getSpeed());	// Tell the timer how fast we are going
         mKMLRecorder.setGpsParams(mGpsParams);			// Tell the KML recorder where we are
-        
         tfrReset();
         /*
          * Database query for new location / pan location.
