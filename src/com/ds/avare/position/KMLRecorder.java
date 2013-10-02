@@ -25,14 +25,17 @@ import android.annotation.SuppressLint;
 import com.ds.avare.gps.GpsParams;
 
 public class KMLRecorder {
-	private long			mStartSpeed;
-	private GpsParams		mGpsParams;
+	private long			mStartSpeed;			// Min speed to begin recording
+	private GpsParams		mGpsParams;				// Current location information
 	private BufferedWriter  mTracksFile;			// File handle to use for writing the data
     private File            mFile;					// core file handler
     private Timer           mTimer;					// background timer task object
     private LinkedList<Coordinate> mPositionHistory;// Stored GPS points 
+    private boolean			mClearListOnStart = false;	// Option to clear the linked list at every start
 	
-    public static final String mKMLFilePrefix = 
+    public static final String KMLFILENAMEFORMAT = "yyyy-MM-dd_HH-mm-ss";
+    public static final String KMLFILENAMEEXTENTION = ".KML";
+    public static final String KMLFILEPREFIX  = 
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 			"<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
 			"	<Document>\n" +
@@ -56,25 +59,36 @@ public class KMLRecorder {
 			"				<altitudeMode>absolute</altitudeMode>\n" +
 			"				<coordinates>\n";
 
-    public static final String mKMLFileSuffix = 
+    public static final String KMLFILESUFFIX = 
             "				</coordinates>\n" +
     		"			</LineString>\n" +
     		"		</Placemark>\n" +
     		"	</Document>\n" +
     		"</kml>\n";
 
-    /* 
-     * Task to write our current position to a file. If the mTracksFile is open, then just write out the long,lat,alt \n 
-     * to that file IF our current speed is non zero. This is set up to be called every [config] seconds. Google wants altitude in meters.
+    /** 
+     * Task to write our current position to a file. If the mTracksFile is open, then just 
+     * write out the long,lat,alt to that file IF our current speed is greater than our 
+     * start speed. This is set up to be called every [config] seconds. Google wants altitude in meters.
      */
     private class addPositionToKMLTask extends TimerTask {
 
         public void run() {
         	synchronized(this) {
 	        	if((mTracksFile!= null) && (mGpsParams != null)) {
+	        		// The output file is open and we have current location info
+	        		//
 	        		if(mGpsParams.getSpeed() >= mStartSpeed) {
+	        			// We are above the min configured speed, so write a line out
+	        			//
 	        			try {
-	        				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + mGpsParams.getLatitude() + "," + (mGpsParams.getAltitude() * .3048) + "\n");
+	        				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + 
+	        												  mGpsParams.getLatitude() + "," + 
+	        												 (mGpsParams.getAltitude() * .3048) + "\n");
+
+	        				// Add this position to our linked list for possible display
+	        				// on the charts
+	        				//
 	        				Coordinate gpsPosition = new Coordinate(mGpsParams.getLongitude(), mGpsParams.getLatitude());
 	        				mPositionHistory.add(gpsPosition);
 	        			} catch (IOException ioe) { }
@@ -88,21 +102,24 @@ public class KMLRecorder {
     	mPositionHistory = new LinkedList<Coordinate>();
     }
     
+    /** 
+     * Are we actively recording data to a file ? 
+     * @return true if we are, false otherwise
+     */
     public boolean isRecording() {
     	return mTracksFile != null;
     }
     
+    /**
+     * Stop saving datapoints to the file and the historical list
+     */
     public void stop(){
-        /*
-         * Irrespective of enable/disable, we need to close the current tracks file if it is
-         * already open
-         */
     	if(mTracksFile != null) {
     		// Close the file
     		// Turn off the timer for running the background thread
     		//
     		try {
-        		mTracksFile.write(mKMLFileSuffix);
+        		mTracksFile.write(KMLFILESUFFIX);
     			mTracksFile.close();
     			if(mTimer != null) 
     				mTimer.cancel();
@@ -115,12 +132,17 @@ public class KMLRecorder {
     	}
     }
     
+    /**
+     * Begin recording position points to a file and our memory linked list
+     * @param folder Directory to store the KML file
+     * @param updateTime Number of seconds between datapoints
+     */
     @SuppressLint("SimpleDateFormat")
 	public void start(String folder, long updateTime) {
 			
 		// Build the file name based upon the current date/time
 		//
-		String fileName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime()) + ".KML";
+		String fileName = new SimpleDateFormat(KMLFILENAMEFORMAT).format(Calendar.getInstance().getTime()) + KMLFILENAMEEXTENTION;
     	mFile = new File(folder, fileName);
 
     	// File handling can throw some exceptions
@@ -138,7 +160,7 @@ public class KMLRecorder {
 
     		// Write out the opening file prefix
     		//
-    		mTracksFile.write(mKMLFilePrefix);
+    		mTracksFile.write(KMLFILEPREFIX);
 
     		// Start a timer task that runs a thread in the background to
     		// record each position at the configured interval
@@ -147,20 +169,50 @@ public class KMLRecorder {
             TimerTask taskTracks = new addPositionToKMLTask();	// The task thread that does the work
             mTimer.scheduleAtFixedRate(taskTracks, 0, updateTime * 1000);	// Set to run at the configured number of seconds
 
+            // If we are supposed to clear the linked list each time
+            // we start timing then do so now
+            //
+            if(mClearListOnStart == true) {
+            	clearPositionHistory();
+            }
     	} catch (IOException ioe) { }
     }
     
+    /**
+     * The positionhistory is a collection of points that a caller can use
+     * to examine historical position information
+     * @return LinkedList of coordinates of all previous positions. Most recent is
+     * at the end.
+     */
     public LinkedList<Coordinate> getPositionHistory() {
     	return mPositionHistory;
     }
     
+    /**
+     * Clear out the linked list of historical position data
+     */
     public void clearPositionHistory() {
     	mPositionHistory.clear();
     }
     
+    /**
+     * This object requires notification of when the position changes. This is
+     * done by the caller sending the information periodically via the GpsParams
+     * object to this method.
+     * @param gpsParams Current location information
+     */
     public void setGpsParams(GpsParams gpsParams) {
     	synchronized(this) {
     		mGpsParams = gpsParams;
     	}
+    }
+    
+    /**
+     * Config setting to auto-clear the linked list everytime start
+     * is called.
+     * @param clearListOnStart boolean to indicate whether to clear list or keep it when start is called.
+     */
+    public void setClearListOnStart(boolean clearListOnStart){
+    	mClearListOnStart = clearListOnStart;
     }
 }
