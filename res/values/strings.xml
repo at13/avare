@@ -177,6 +177,6 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="TrkUpdShowHistoryLabel">&quot;Display Track History&quot;</string>
     <string name="TrkUpdShowHistorySummary">&quot;Display the flight path track on the active chart.&quot;</string>
     <string name="UseFlightTimer">&quot;UseFlightTimer&quot;</string>
-    <string name="UseFlightTimerLabel">&quot;Enable Flight Timer&quot;</string>
-    <string name="UseFlightTimerSummary">&quot;Select to enable the flight time counter.&quot;</string>
+    <string name="UseFlightTimerLabel">&quot;Display Flight Timer&quot;</string>
+    <string name="UseFlightTimerSummary">&quot;Select to display the flight time counter.&quot;</string>
 </resources>
