@@ -30,7 +30,7 @@ public class HobbsMeter {
 	
     /** 
      * Fires every second, and after 36 seconds, will adjust the hobbs counter up by 1/100 of an hour.
-     * We need the one second resolution in order to "blink" the middle colon character when the
+     * We need the one second resolution in order to "blink" the middle period character when the
      * timer is active.
      */
     private class HobbsTask extends TimerTask {
@@ -80,11 +80,11 @@ public class HobbsMeter {
 	/**
 	 * Get the value of this HOBSS meter and return it in a formatted string
 	 * @return "X:YY" where X is hours, and YY is hundredths of an hour. Always
-	 * return a string that is 5 characters in length. The center colon ':' will
+	 * return a string that is 5 characters in length. The center period '.' will
 	 * blink every second when the clock is running.
 	 */
 	public String getValue() {
-		char c = (mTimer == null) ? ':' : (((mSeconds % 2) == 0) ? ':' : ' ');
+		char c = (mTimer == null) ? '.' : (((mSeconds % 2) == 0) ? '.' : ' ');
 		return String.format(Locale.getDefault(), "%2d%c%d%d", mHours, c, mTenths, mHundredths);
 	}
 	
