@@ -83,10 +83,11 @@ public class HobbsMeter {
 	
 	/**
 	 * Get the value of this HOBSS meter and return it in a formatted string
-	 * @return "X.YY" where X is hours, and YY is hundreths of an hour
+	 * @return "X.YY" where X is hours, and YY is hundreths of an hour. Always
+	 * return a string that is 5 characters in length
 	 */
 	public String getValue() {
-		return String.format(Locale.getDefault(), "%d.%d%d", mHours, mTenths, mHundredths);
+		return String.format(Locale.getDefault(), "%2d:%d%d", mHours, mTenths, mHundredths);
 	}
 	
 	/**
