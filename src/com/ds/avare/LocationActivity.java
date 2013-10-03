@@ -13,6 +13,7 @@ Redistribution and use in source and binary forms, with or without modification,
 package com.ds.avare;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Observable;
 import java.util.Observer;
 import com.ds.avare.R;
@@ -650,8 +651,11 @@ public class LocationActivity extends Activity implements Observer {
 
             @Override
             public void onClick(View v) {
-            	mLocationView.setTracks(!mLocationView.getTracks());
-            }            
+            	// The fileURI is returned when the tracks are closed off. Future would
+            	// be to have this (auto)post to users timline on facebook/google etc ?
+            	//
+            	URI fileURI = mLocationView.setTracks(!mLocationView.getTracks());
+            }        
         });
 
         /*

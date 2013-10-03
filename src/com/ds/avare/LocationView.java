@@ -13,6 +13,7 @@ Redistribution and use in source and binary forms, with or without modification,
 package com.ds.avare;
 
 
+import java.net.URI;
 import java.util.LinkedList;
 
 import com.ds.avare.gdl90.NexradBitmap;
@@ -1653,12 +1654,15 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * Called when the user presses the "tracks" button on the viewlocation screen to
      * toggle the state of the saving of GPS positions.
      * @param b enable/disable tracking
+     * @return URI of the file that was just closed, or null if it was just opened
      */
-    public void setTracks(boolean b) {
-        if(b == true)
+    public URI setTracks(boolean b) {
+        if(b == true) {
         	mKMLRecorder.start(mPref.mapsFolder(), mPref.getTrackUpdateTime());
+        	return null;
+        }
         else
-        	mKMLRecorder.stop();
+        	return mKMLRecorder.stop();
     }
 
     /**

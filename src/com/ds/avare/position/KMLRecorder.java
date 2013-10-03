@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -32,6 +33,7 @@ public class KMLRecorder {
     private Timer           mTimer;					// background timer task object
     private LinkedList<Coordinate> mPositionHistory;// Stored GPS points 
     private boolean			mClearListOnStart = false;	// Option to clear the linked list at every start
+	private URI 			mFileURI;				// The URI of the file created for these datapoints
 	
     public static final String KMLFILENAMEFORMAT = "yyyy-MM-dd_HH-mm-ss";
     public static final String KMLFILENAMEEXTENTION = ".KML";
@@ -112,8 +114,9 @@ public class KMLRecorder {
     
     /**
      * Stop saving datapoints to the file and the historical list
+     * @return A URI of the file just closed
      */
-    public void stop(){
+    public URI stop(){
     	if(mTracksFile != null) {
     		// Close the file
     		// Turn off the timer for running the background thread
@@ -129,7 +132,9 @@ public class KMLRecorder {
     		//
     		mTracksFile = null;
     		mTimer = null;
+    		return mFileURI;
     	}
+    	return null;
     }
     
     /**
@@ -144,7 +149,7 @@ public class KMLRecorder {
 		//
 		String fileName = new SimpleDateFormat(KMLFILENAMEFORMAT).format(Calendar.getInstance().getTime()) + KMLFILENAMEEXTENTION;
     	mFile = new File(folder, fileName);
-
+    	
     	// File handling can throw some exceptions
     	//
     	try {
@@ -155,6 +160,14 @@ public class KMLRecorder {
         	if(mFile.exists() == false){
         		mFile.createNewFile();
         	}
+
+        	// Save off the URI of this file we just created. This value
+        	// is returned at the stop() method.
+        	//
+        	mFileURI = mFile.toURI();
+        	
+        	// Create a new writer, then a buffered writer for this file
+        	//
         	FileWriter fileWriter = new FileWriter(mFile);
     		mTracksFile = new BufferedWriter(fileWriter, 8192);
 
