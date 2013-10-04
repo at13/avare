@@ -24,7 +24,7 @@ import com.ds.avare.place.Destination;
 import com.ds.avare.place.Obstacle;
 import com.ds.avare.place.Runway;
 import com.ds.avare.position.Coordinate;
-import com.ds.avare.position.KMLRecorder;
+import com.ds.avare.flightLog.KMLRecorder;
 import com.ds.avare.position.Movement;
 import com.ds.avare.position.Origin;
 import com.ds.avare.position.Pan;
