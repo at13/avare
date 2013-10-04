@@ -153,12 +153,11 @@ public class KMLRecorder {
     	// File handling can throw some exceptions
     	//
     	try {
-    		
-    		// If the file does not exist, then create it. Get some
-    		// writer objects from it
+    		// If the file does not exist, then create it. 
     		//
         	if(mFile.exists() == false){
-        		mFile.createNewFile();
+        		mFile.mkdirs();			// Ensure the directory path exists
+        		mFile.createNewFile();	// Create the new file
         	}
 
         	// Save off the URI of this file we just created. This value

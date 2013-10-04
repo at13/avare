@@ -23,7 +23,7 @@ import java.util.TimerTask;
  */
 public class FlightTimer extends HobbsMeter {
 	private Timer		 mTimer;
-	private double 		 mMinFlightSpeed = 30;	// 30 mph/kph/kts means we are flying
+	private double 		 mMinFlightSpeed = 20;	// 20 mph/kph/kts is fast enough to say we intend to fly
 	private double		 mSpeed = 0;
 	
 	public FlightTimer() {

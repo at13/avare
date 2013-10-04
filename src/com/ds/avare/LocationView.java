@@ -13,6 +13,7 @@ Redistribution and use in source and binary forms, with or without modification,
 package com.ds.avare;
 
 
+import java.io.File;
 import java.net.URI;
 import java.util.LinkedList;
 
@@ -1658,7 +1659,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      */
     public URI setTracks(boolean b) {
         if(b == true) {
-        	mKMLRecorder.start(mPref.mapsFolder(), mPref.getTrackUpdateTime());
+        	mKMLRecorder.start(mPref.mapsFolder() + File.separatorChar + "tracks", mPref.getTrackUpdateTime());
         	return null;
         }
         else
