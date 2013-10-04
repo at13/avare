@@ -51,7 +51,21 @@ public class KMLRecorder {
 			"			<PolyStyle>\n" +
 			"				<color>7fcccccc</color>\n" +
 			"			</PolyStyle>\n" +
+		    "		</Style>\n" + 
+			"		<Style id=\"dot\">\n" + 
+			"			<IconStyle>\n" +
+			"				<color>FDFFFFFF</color>\n" +
+			"				<scale>0.5</scale>\n" +
+			"				<Icon>\n" +
+			"					<href>root://icons/palette-4.png</href>\n" +
+			"						<x>32</x>\n" +
+			"						<y>128</y>\n" +
+			"						<w>32</w>\n" +
+			"						<h>32</h>\n" +
+			"				</Icon>\n" +
+			"			</IconStyle>\n" +
 			"		</Style>\n";
+
     
     public static final String KMLCOORDINATESHEADER =
 			"		<Placemark>\n" +
@@ -68,6 +82,22 @@ public class KMLRecorder {
             "				</coordinates>\n" +
     		"			</LineString>\n" +
     		"		</Placemark>\n";
+
+    public static final String KMLTRACKPOINT =
+		    "		<Placemark>\n" +
+		    "			<description><![CDATA[\n" +
+		    "				Altitude: %f\n" +
+		    "				Bearing: %f\n" +
+		    "				Speed: %f\n" +
+		    "				Long: %f\n" +
+		    "				Lat: %f]]>\n" +
+		    "			</description>\n" +
+		    "			<styleUrl>#dot</styleUrl>\n" +
+		    "			<Point>\n" +
+		    "				<altitudeMode>absolute</altitudeMode>\n" +
+		    "				<coordinates>%f,%f,%f</coordinates>\n" +
+		    "			</Point>\n" +
+		    "		</Placemark>\n";
 
     public static final String KMLFILESUFFIX = 
     		"	</Document>\n" +
@@ -122,23 +152,38 @@ public class KMLRecorder {
      */
     public URI stop(){
     	if(mTracksFile != null) {
-    		// Close the file
-    		// Turn off the timer for running the background thread
-    		//
+    		// File operations can cause exceptions and we need to account for that
     		try {
     			mTracksFile.write(KMLCOORDINATESTRAILER);	// Close off the coordinates section
+
+    			// Write out each track point of this flight as its own entry. This
+    			// saves out more detail than just lat/long of the point.
+    			for(int idx = mFlightStartIndex; idx < mPositionHistory.size(); idx++) {
+					GpsParams gpsParams = mPositionHistory.get(idx);
+					String trackPoint = String.format(KMLTRACKPOINT,
+    						gpsParams.getAltitude() * .3048,
+    						gpsParams.getBearing(),
+    						gpsParams.getSpeed(),
+    						gpsParams.getLongitude(),
+    						gpsParams.getLatitude(),
+    						gpsParams.getLongitude(),
+    						gpsParams.getLatitude(),
+    						gpsParams.getAltitude() * .3048
+    						);
+					mTracksFile.write(trackPoint);
+    			}
     			
-        		mTracksFile.write(KMLFILESUFFIX);			// to close off the overall file 
-    			mTracksFile.close();
-    			if(mTimer != null) 
-    				mTimer.cancel();
+    			// Close off the overall KML file now
+        		mTracksFile.write(KMLFILESUFFIX);	// The last of the file data 
+    			mTracksFile.close();				// close the file
+    			if(mTimer != null) 					// is the timer running ? 
+    				mTimer.cancel();				// ... yes, cancel it
     		} catch (IOException ioe) { }
 
     		// Clear out our control objects
-    		//
-    		mTracksFile = null;
-    		mTimer = null;
-    		return mFileURI;
+    		mTracksFile = null;	// No track file anymore
+    		mTimer = null;		// no timer either
+    		return mFileURI;	// return with the URI of the file we just closed
     	}
     	return null;
     }
