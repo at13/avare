@@ -31,9 +31,10 @@ public class KMLRecorder {
 	private BufferedWriter  mTracksFile;			// File handle to use for writing the data
     private File            mFile;					// core file handler
     private Timer           mTimer;					// background timer task object
-    private LinkedList<Coordinate> mPositionHistory;// Stored GPS points 
+    private LinkedList<GpsParams> mPositionHistory; // Stored GPS points 
     private boolean			mClearListOnStart = false;	// Option to clear the linked list at every start
 	private URI 			mFileURI;				// The URI of the file created for these datapoints
+	private int				mFlightStartIndex = 0;	// When "start" is pressed, this is set to the size of our history list.
 	
     public static final String KMLFILENAMEFORMAT = "yyyy-MM-dd_HH-mm-ss";
     public static final String KMLFILENAMEEXTENTION = ".KML";
@@ -50,7 +51,9 @@ public class KMLRecorder {
 			"			<PolyStyle>\n" +
 			"				<color>7fcccccc</color>\n" +
 			"			</PolyStyle>\n" +
-			"		</Style>\n" +
+			"		</Style>\n";
+    
+    public static final String KMLCOORDINATESHEADER =
 			"		<Placemark>\n" +
 			"			<name>Avare Flight Path</name>\n" +
 			"			<visibility>1</visibility>\n" +
@@ -61,10 +64,12 @@ public class KMLRecorder {
 			"				<altitudeMode>absolute</altitudeMode>\n" +
 			"				<coordinates>\n";
 
-    public static final String KMLFILESUFFIX = 
+    public static final String KMLCOORDINATESTRAILER =
             "				</coordinates>\n" +
     		"			</LineString>\n" +
-    		"		</Placemark>\n" +
+    		"		</Placemark>\n";
+
+    public static final String KMLFILESUFFIX = 
     		"	</Document>\n" +
     		"</kml>\n";
 
@@ -91,8 +96,7 @@ public class KMLRecorder {
 	        				// Add this position to our linked list for possible display
 	        				// on the charts
 	        				//
-	        				Coordinate gpsPosition = new Coordinate(mGpsParams.getLongitude(), mGpsParams.getLatitude());
-	        				mPositionHistory.add(gpsPosition);
+	        				mPositionHistory.add(mGpsParams);
 	        			} catch (IOException ioe) { }
 	        		}
 	        	}
@@ -101,7 +105,7 @@ public class KMLRecorder {
     }
 
     public KMLRecorder(){
-    	mPositionHistory = new LinkedList<Coordinate>();
+    	mPositionHistory = new LinkedList<GpsParams>();
     }
     
     /** 
@@ -122,7 +126,9 @@ public class KMLRecorder {
     		// Turn off the timer for running the background thread
     		//
     		try {
-        		mTracksFile.write(KMLFILESUFFIX);
+    			mTracksFile.write(KMLCOORDINATESTRAILER);	// Close off the coordinates section
+    			
+        		mTracksFile.write(KMLFILESUFFIX);			// to close off the overall file 
     			mTracksFile.close();
     			if(mTimer != null) 
     				mTimer.cancel();
@@ -153,10 +159,16 @@ public class KMLRecorder {
     	// File handling can throw some exceptions
     	//
     	try {
+    		
+    		// Ensure the full path to the file area exists
+    		File mDirPath = new File(folder, "");
+    		if(mDirPath.exists() == false) {
+    			mDirPath.mkdir();
+    		}
+    		
     		// If the file does not exist, then create it. 
     		//
         	if(mFile.exists() == false){
-        		mFile.mkdirs();			// Ensure the directory path exists
         		mFile.createNewFile();	// Create the new file
         	}
 
@@ -172,7 +184,8 @@ public class KMLRecorder {
 
     		// Write out the opening file prefix
     		//
-    		mTracksFile.write(KMLFILEPREFIX);
+    		mTracksFile.write(KMLFILEPREFIX);			// Overall file prelude
+    		mTracksFile.write(KMLCOORDINATESHEADER);	// Open coordinates data
 
     		// Start a timer task that runs a thread in the background to
     		// record each position at the configured interval
@@ -187,6 +200,12 @@ public class KMLRecorder {
             if(mClearListOnStart == true) {
             	clearPositionHistory();
             }
+            
+            // Mark the starting entry of our history list. This is required in order
+            // to save off the individual points of our trip at close
+            //
+            mFlightStartIndex = mPositionHistory.size();
+            
     	} catch (IOException ioe) { }
     }
     
@@ -196,7 +215,7 @@ public class KMLRecorder {
      * @return LinkedList of coordinates of all previous positions. Most recent is
      * at the end.
      */
-    public LinkedList<Coordinate> getPositionHistory() {
+    public LinkedList<GpsParams> getPositionHistory() {
     	return mPositionHistory;
     }
     

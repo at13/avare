@@ -1041,7 +1041,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     private void drawTracks(Canvas canvas) {
     	// Some pre-conditions that would prevent us from drawing anything
     	//
-    	LinkedList<Coordinate> ph = mKMLRecorder.getPositionHistory();
+    	LinkedList<GpsParams> ph = mKMLRecorder.getPositionHistory();
         if(mPref.shouldDrawTracks() && ph != null) {
             if((ph.size() > 1) && (null == mPointProjection)) {
             	if(mService == null){
@@ -1054,7 +1054,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
             	//
                 int idx = 0;
                 for (idx = ph.size() - 1; idx > 0; idx--) {
-                	if (mOrigin.isInDisplayRange(ph.get(idx)) == true)
+                	if (mOrigin.isInDisplayRange(new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude())) == true)
                 		break;
                 }
 
@@ -1071,12 +1071,12 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 
                 // Get the first visible GPS point to start at
             	//
-                Coordinate gpsPos1 = ph.get(idx);
-            	for( ; idx >= 0; idx--) {
+                Coordinate gpsPos1 = new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude());
+            	for(--idx ; idx >= 0; idx--) {
             		
             		// Get the next position to draw to
             		//
-            		Coordinate gpsPos2 = ph.get(idx);
+            		Coordinate gpsPos2 = new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude());
             		
             		// Check the location against our display bounds. If this point is still on our 
             		// display area then it is OK to draw the line. If it is out of bounds, assume that 
