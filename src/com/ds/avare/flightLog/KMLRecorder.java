@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -27,14 +28,14 @@ import com.ds.avare.gps.GpsParams;
 
 public class KMLRecorder {
 	private long			mStartSpeed;			// Min speed to begin recording
-	private GpsParams		mGpsParams;				// Current location information
 	private BufferedWriter  mTracksFile;			// File handle to use for writing the data
     private File            mFile;					// core file handler
-    private Timer           mTimer;					// background timer task object
     private LinkedList<GpsParams> mPositionHistory; // Stored GPS points 
     private boolean			mClearListOnStart = false;	// Option to clear the linked list at every start
 	private URI 			mFileURI;				// The URI of the file created for these datapoints
 	private int				mFlightStartIndex = 0;	// When "start" is pressed, this is set to the size of our history list.
+	private long			mTimeOfLastFix = 0;		// Time the last fix we used occurred
+	private long			mUpdateTime = 0;		// Time interval to record positions
 	
     public static final String KMLFILENAMEFORMAT = "yyyy-MM-dd_HH-mm-ss";
     public static final String KMLFILENAMEEXTENTION = ".KML";
@@ -86,6 +87,7 @@ public class KMLRecorder {
     public static final String KMLTRACKPOINT =
 		    "		<Placemark>\n" +
 		    "			<description><![CDATA[\n" +
+		    "				Time: %s\n" + 
 		    "				Altitude: %f\n" +
 		    "				Bearing: %f\n" +
 		    "				Speed: %f\n" +
@@ -102,37 +104,6 @@ public class KMLRecorder {
     public static final String KMLFILESUFFIX = 
     		"	</Document>\n" +
     		"</kml>\n";
-
-    /** 
-     * Task to write our current position to a file. If the mTracksFile is open, then just 
-     * write out the long,lat,alt to that file IF our current speed is greater than our 
-     * start speed. This is set up to be called every [config] seconds. Google wants altitude in meters.
-     */
-    private class addPositionToKMLTask extends TimerTask {
-
-        public void run() {
-        	synchronized(this) {
-	        	if((mTracksFile!= null) && (mGpsParams != null)) {
-	        		// The output file is open and we have current location info
-	        		//
-	        		if(mGpsParams.getSpeed() >= mStartSpeed) {
-	        			// We are above the min configured speed, so write a line out
-	        			//
-	        			try {
-	        				mTracksFile.write ("\t\t\t\t\t" + mGpsParams.getLongitude() + "," + 
-	        												  mGpsParams.getLatitude() + "," + 
-	        												 (mGpsParams.getAltitude() * .3048) + "\n");
-
-	        				// Add this position to our linked list for possible display
-	        				// on the charts
-	        				//
-	        				mPositionHistory.add(mGpsParams);
-	        			} catch (IOException ioe) { }
-	        		}
-	        	}
-        	}
-        }
-    }
 
     public KMLRecorder(){
     	mPositionHistory = new LinkedList<GpsParams>();
@@ -161,6 +132,7 @@ public class KMLRecorder {
     			for(int idx = mFlightStartIndex; idx < mPositionHistory.size(); idx++) {
 					GpsParams gpsParams = mPositionHistory.get(idx);
 					String trackPoint = String.format(KMLTRACKPOINT,
+    						new Date(gpsParams.getTime()).toString(),
     						gpsParams.getAltitude() * .3048,
     						gpsParams.getBearing(),
     						gpsParams.getSpeed(),
@@ -176,13 +148,10 @@ public class KMLRecorder {
     			// Close off the overall KML file now
         		mTracksFile.write(KMLFILESUFFIX);	// The last of the file data 
     			mTracksFile.close();				// close the file
-    			if(mTimer != null) 					// is the timer running ? 
-    				mTimer.cancel();				// ... yes, cancel it
     		} catch (IOException ioe) { }
 
     		// Clear out our control objects
     		mTracksFile = null;	// No track file anymore
-    		mTimer = null;		// no timer either
     		return mFileURI;	// return with the URI of the file we just closed
     	}
     	return null;
@@ -195,7 +164,8 @@ public class KMLRecorder {
      */
     @SuppressLint("SimpleDateFormat")
 	public void start(String folder, long updateTime) {
-			
+    	mUpdateTime = updateTime * 1000;	// we work in milliseconds on time here
+    	
 		// Build the file name based upon the current date/time
 		//
 		String fileName = new SimpleDateFormat(KMLFILENAMEFORMAT).format(Calendar.getInstance().getTime()) + KMLFILENAMEEXTENTION;
@@ -232,13 +202,6 @@ public class KMLRecorder {
     		mTracksFile.write(KMLFILEPREFIX);			// Overall file prelude
     		mTracksFile.write(KMLCOORDINATESHEADER);	// Open coordinates data
 
-    		// Start a timer task that runs a thread in the background to
-    		// record each position at the configured interval
-    		//
-            mTimer = new Timer();	// Create a timer for writing the tracks
-            TimerTask taskTracks = new addPositionToKMLTask();	// The task thread that does the work
-            mTimer.scheduleAtFixedRate(taskTracks, 0, updateTime * 1000);	// Set to run at the configured number of seconds
-
             // If we are supposed to clear the linked list each time
             // we start timing then do so now
             //
@@ -274,14 +237,29 @@ public class KMLRecorder {
     /**
      * This object requires notification of when the position changes. This is
      * done by the caller sending the information periodically via the GpsParams
-     * object to this method.
+     * object to this method. If it is greater than our stall speed,  if we have a file
+     * open to write it to.
      * @param gpsParams Current location information
      */
     public void setGpsParams(GpsParams gpsParams) {
-    	synchronized(this) {
-    		mGpsParams = gpsParams;
+    	if(((gpsParams.getTime() - mTimeOfLastFix) > mUpdateTime) &&
+			(gpsParams.getSpeed() >= mStartSpeed)) {
+			mTimeOfLastFix = gpsParams.getTime();
+        	if(mTracksFile != null) {
+        		// The output file is open and we have current location info
+        		// Convert the altitude from feet to meters for the KML file
+    			try {
+    				mTracksFile.write ("\t\t\t\t\t" + gpsParams.getLongitude() + "," + 
+    												  gpsParams.getLatitude() + "," + 
+    												 (gpsParams.getAltitude() * .3048) + "\n");
+
+    				// Add this position to our linked list for possible display
+    				// on the charts
+    				mPositionHistory.add(GpsParams.copy(gpsParams));
+    			} catch (IOException ioe) { }
+    		}
     	}
-    }
+	}
     
     /**
      * Config setting to auto-clear the linked list everytime start
