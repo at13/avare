@@ -175,4 +175,13 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="prefShowDistanceRings">ShowDistanceRings</string>
     <string name="ShowDistanceRingsLabel">&quot;Show Distance Rings&quot;</string>
     <string name="ShowDistanceRingsSummary">&quot;Select to display distance rings around current location on chart.&quot;</string>
+    <string name="UnitKnot">kt</string>
+    <string name="UnitMile">mi</string>
+    <string name="UnitKilometer">km</string>
+    <string name="DistKnot">nm</string>
+    <string name="DistMile">mi</string>
+    <string name="DistKilometer">km</string>
+    <string name="SpeedKnot">kt</string>
+    <string name="SpeedMile">mh</string>
+    <string name="SpeedKilometer">kh</string>
 </resources>

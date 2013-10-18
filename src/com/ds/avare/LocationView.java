@@ -1069,7 +1069,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * @param canvas
      */
     private void drawDistanceRings(Canvas canvas) {
-    	final int Ring1x[] = { 320, 160,  80,  40};
+    	final int Ring1x[] = { 320, 160,  80,  40};	// Calibrated values for showing nautical miles
     	final int Ring2x[] = { 640, 320, 160,  80};
     	final int Ring3x[] = {1280, 640, 320, 160};
     	final String Ring1Text[] = {"10", "5",  "2.5", "1.25"};
@@ -1077,10 +1077,10 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     	final String Ring3Text[] = {"40", "20", "10",  "5"};
 
     	double distanceFactor = 1;
-    	if (mPref.getDistanceUnit().equals("mi")) {
-    		distanceFactor = 1 / 1.15;
-    	} else if (mPref.getDistanceUnit().equals("km")) {
-    		distanceFactor = 1 / 1.852;
+    	if (mPref.getDistanceUnit().equals(mContext.getString(R.string.UnitMile))) {
+    		distanceFactor = 1 / 1.15;	// adjust for nm to miles
+    	} else if (mPref.getDistanceUnit().equals(mContext.getString(R.string.UnitKilometer))) {
+    		distanceFactor = 1 / 1.852;	// adjust for nm to kilometers
     	}
     	
         if(mPref.showDistanceRings() != false) {
@@ -1104,6 +1104,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         	mPaint.setStrokeWidth(5);
         	mPaint.setStyle(Paint.Style.STROKE);
         	mPaint.setColor(Color.WHITE);
+        	mPaint.setAlpha(200);
         	canvas.drawCircle(x, y, ring1R, mPaint);
         	canvas.drawCircle(x, y, ring2R, mPaint);
         	canvas.drawCircle(x, y, ring3R, mPaint);
@@ -1113,16 +1114,19 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         	mPaint.setTextSize(45);
         	mPaint.setStyle(Paint.Style.FILL);
 
-        	Rect textSize = new Rect();
-            
-            mPaint.getTextBounds(Ring1Text[ringScale], 0, Ring1Text[ringScale].length(), textSize);
-        	canvas.drawText(Ring1Text[ringScale], x + ring1R - (textSize.right / 2),  y, mPaint);
-
-            mPaint.getTextBounds(Ring2Text[ringScale], 0, Ring2Text[ringScale].length(), textSize);
-        	canvas.drawText(Ring2Text[ringScale],  x + ring2R - (textSize.right / 2), y, mPaint);
-
-            mPaint.getTextBounds(Ring3Text[ringScale], 0, Ring3Text[ringScale].length(), textSize);
-            canvas.drawText(Ring3Text[ringScale],  x + ring3R - (textSize.right / 2), y, mPaint);
+        	if(null == mPointProjection) {
+        		// Only draw the text if we are not "pinching"
+            	Rect textSize = new Rect();
+	        	mPaint.getTextBounds(Ring1Text[ringScale], 0, Ring1Text[ringScale].length(), textSize);
+	        	canvas.drawText(Ring1Text[ringScale], x + ring1R - (textSize.right / 2),  y, mPaint);
+	
+	            mPaint.getTextBounds(Ring2Text[ringScale], 0, Ring2Text[ringScale].length(), textSize);
+	        	canvas.drawText(Ring2Text[ringScale],  x + ring2R - (textSize.right / 2), y, mPaint);
+	
+	            mPaint.getTextBounds(Ring3Text[ringScale], 0, Ring3Text[ringScale].length(), textSize);
+	            canvas.drawText(Ring3Text[ringScale],  x + ring3R - (textSize.right / 2), y, mPaint);
+        	}
+        	
         	mPaint.setTextSize(oldSize);
         }
     }
