@@ -172,4 +172,7 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="prefWeatherCategoryTitle">Weather</string>
     <string name="prefDisplayCategoryTitle">Display</string>
     <string name="prefAppStateCategoryTitle">Application State</string>
+    <string name="prefShowDistanceRings">ShowDistanceRings</string>
+    <string name="ShowDistanceRingsLabel">&quot;Show Distance Rings&quot;</string>
+    <string name="ShowDistanceRingsSummary">&quot;Select to display distance rings around current location on chart.&quot;</string>
 </resources>

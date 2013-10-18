@@ -1063,7 +1063,70 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 			}
 		}
 	}
-    
+
+    /**
+     * Draws concentric circles around the current aircraft position showing distance.
+     * @param canvas
+     */
+    private void drawDistanceRings(Canvas canvas) {
+    	final int Ring1x[] = { 320, 160,  80,  40};
+    	final int Ring2x[] = { 640, 320, 160,  80};
+    	final int Ring3x[] = {1280, 640, 320, 160};
+    	final String Ring1Text[] = {"10", "5",  "2.5", "1.25"};
+    	final String Ring2Text[] = {"20", "10", "5",   "2.5"};
+    	final String Ring3Text[] = {"40", "20", "10",  "5"};
+
+    	double distanceFactor = 1;
+    	if (mPref.getDistanceUnit().equals("mi")) {
+    		distanceFactor = 1 / 1.15;
+    	} else if (mPref.getDistanceUnit().equals("km")) {
+    		distanceFactor = 1 / 1.852;
+    	}
+    	
+        if(mPref.showDistanceRings() != false) {
+            float x = (float)(mOrigin.getOffsetX(mGpsParams.getLongitude()));
+            float y = (float)(mOrigin.getOffsetY(mGpsParams.getLatitude()));                        
+            float scaleFactor = mScale.getScaleFactor();
+            
+            int ringScale = 0;
+        	if((scaleFactor * distanceFactor) > 2) {
+        		ringScale = 3;
+        	} else if ((scaleFactor * distanceFactor) > 1) {
+        		ringScale = 2;
+        	} else if ((scaleFactor * distanceFactor) > .5) {
+        		ringScale = 1;
+        	}
+
+        	float ring1R = (float)(Ring1x[ringScale] * scaleFactor * distanceFactor);
+        	float ring2R = (float)(Ring2x[ringScale] * scaleFactor * distanceFactor);
+        	float ring3R = (float)(Ring3x[ringScale] * scaleFactor * distanceFactor);
+        	
+        	mPaint.setStrokeWidth(5);
+        	mPaint.setStyle(Paint.Style.STROKE);
+        	mPaint.setColor(Color.WHITE);
+        	canvas.drawCircle(x, y, ring1R, mPaint);
+        	canvas.drawCircle(x, y, ring2R, mPaint);
+        	canvas.drawCircle(x, y, ring3R, mPaint);
+        	mPaint.setColor(TEXT_COLOR);
+        	mPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
+        	float oldSize = mPaint.getTextSize();
+        	mPaint.setTextSize(45);
+        	mPaint.setStyle(Paint.Style.FILL);
+
+        	Rect textSize = new Rect();
+            
+            mPaint.getTextBounds(Ring1Text[ringScale], 0, Ring1Text[ringScale].length(), textSize);
+        	canvas.drawText(Ring1Text[ringScale], x + ring1R - (textSize.right / 2),  y, mPaint);
+
+            mPaint.getTextBounds(Ring2Text[ringScale], 0, Ring2Text[ringScale].length(), textSize);
+        	canvas.drawText(Ring2Text[ringScale],  x + ring2R - (textSize.right / 2), y, mPaint);
+
+            mPaint.getTextBounds(Ring3Text[ringScale], 0, Ring3Text[ringScale].length(), textSize);
+            canvas.drawText(Ring3Text[ringScale],  x + ring3R - (textSize.right / 2), y, mPaint);
+        	mPaint.setTextSize(oldSize);
+        }
+    }
+
     /**
      * @param canvas
      * Does pretty much all drawing on screen
@@ -1092,6 +1155,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         drawTrack(canvas);
         drawObstacles(canvas);
         drawAircraft(canvas);
+        drawDistanceRings(canvas);
         if(mTrackUp) {
             canvas.restore();
         }
