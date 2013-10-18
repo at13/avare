@@ -143,6 +143,17 @@ Redistribution and use in source and binary forms, with or without modification,
             android:entries="@array/ChartType"
             android:entryValues="@array/ChartTypeValues" />
 
+        <ToggleButton
+            android:id="@+id/location_button_tracks"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/location_button_pref"
+            android:textStyle="bold"
+            android:text="@string/Tracks"
+            android:textOff="@string/Tracks"
+            android:textOn="@string/Tracks" />
+        
         <RelativeLayout
             android:layout_margin="5dp"
             android:id="@+id/location_popout_layout"

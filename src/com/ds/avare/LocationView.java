@@ -13,14 +13,18 @@ Redistribution and use in source and binary forms, with or without modification,
 package com.ds.avare;
 
 
+import java.io.File;
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.ds.avare.flightLog.KMLRecorder;
 import com.ds.avare.gdl90.NexradBitmap;
 import com.ds.avare.gps.GpsParams;
 import com.ds.avare.place.Destination;
 import com.ds.avare.place.Obstacle;
 import com.ds.avare.place.Runway;
+import com.ds.avare.position.Coordinate;
 import com.ds.avare.position.Movement;
 import com.ds.avare.position.Origin;
 import com.ds.avare.position.Pan;
@@ -56,6 +60,7 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -218,7 +223,11 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      */
     private static final int TEXT_COLOR = Color.WHITE; 
     private static final int TEXT_COLOR_OPPOSITE = Color.BLACK; 
-    
+
+    /*
+     * Declare our KML position tracker
+     */
+    KMLRecorder	mKMLRecorder;	// For writing plots to a KML file
 
     /**
      * @param context
@@ -278,7 +287,9 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         mGestureDetector = new GestureDetector(context, new GestureListener());
         
         mRunwayPaint = new Paint(mPaint);
-    }
+
+        mKMLRecorder = new KMLRecorder();	// Start up the KML recorder feature
+}
     
     /**
      * 
@@ -1065,6 +1076,75 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 	}
     
     /**
+     * Draw the tracks to show our previous positions. If tracking is enabled, there is
+     * a linked list of gps coordinates attached to this view with the most recent one at the end
+     * of that list. Start at the end value to begin the drawing and as soon as we find one that is 
+     * not in the range of this display, we can assume that we're done.
+     * @param canvas
+     */
+    private void drawTracks(Canvas canvas) {
+    	// Some pre-conditions that would prevent us from drawing anything
+    	//
+    	LinkedList<GpsParams> ph = mKMLRecorder.getPositionHistory();
+        if(mPref.shouldDrawTracks() && ph != null) {
+            if((ph.size() > 1) && (null == mPointProjection)) {
+            	if(mService == null){
+            		return;
+            	}
+
+                // Get the position point at the end of the list. This is our starting 
+                // location. From here, search backward until we find the first location
+                // that is in the current display range.
+            	//
+                int idx = 0;
+                for (idx = ph.size() - 1; idx > 0; idx--) {
+                	if (mOrigin.isInDisplayRange(new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude())) == true)
+                		break;
+                }
+
+                // If no points are found in range, then there is nothing to plot
+                //
+                if (idx == 0) 
+                	return;
+                
+            	// Set the brush color and width
+            	//
+            	mPaint.setColor(Color.MAGENTA);
+                mPaint.setStrokeWidth(5);
+            	mPaint.setStyle(Paint.Style.FILL);
+
+                // Get the first visible GPS point to start at
+            	//
+                Coordinate gpsPos1 = new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude());
+            	for(--idx ; idx >= 0; idx--) {
+            		
+            		// Get the next position to draw to
+            		//
+            		Coordinate gpsPos2 = new Coordinate(ph.get(idx).getLongitude(), ph.get(idx).getLatitude());
+            		
+            		// Check the location against our display bounds. If this point is still on our 
+            		// display area then it is OK to draw the line. If it is out of bounds, assume that 
+            		// we are done with our plotting
+            		//
+            		if(mOrigin.isInDisplayRange(gpsPos2)) {
+        	            float x1 = (float)(mOrigin.getOffsetX(gpsPos1.getLongitude()));
+        	            float y1 = (float)(mOrigin.getOffsetY(gpsPos1.getLatitude()));                        
+
+        	            float x2 = (float)(mOrigin.getOffsetX(gpsPos2.getLongitude()));
+        	            float y2 = (float)(mOrigin.getOffsetY(gpsPos2.getLatitude()));                        
+
+        	            canvas.drawLine(x1, y1, x2, y2, mPaint);
+
+        	            // Set the end point as our new start point and do this all again
+        	            //
+        	            gpsPos1 = gpsPos2;
+            		} else return; // Point is out of range, we are done
+            	}
+            }
+        }
+    }
+
+    /**
      * @param canvas
      * Does pretty much all drawing on screen
      */
@@ -1092,6 +1172,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         drawTrack(canvas);
         drawObstacles(canvas);
         drawAircraft(canvas);
+        drawTracks(canvas);			// Historical positions
         if(mTrackUp) {
             canvas.restore();
         }
@@ -1144,6 +1225,8 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
          * Comes from location manager
          */
         mGpsParams = params;
+
+        mKMLRecorder.setGpsParams(mGpsParams);			// Tell the KML recorder where we are
 
         tfrReset();
         /*
@@ -1631,5 +1714,34 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         }
         
         return changed;
+    }
+
+    /**
+     * Called when the user presses the "tracks" button on the viewlocation screen to
+     * toggle the state of the saving of GPS positions.
+     * @param b enable/disable tracking
+     * @return URI of the file that was just closed, or null if it was just opened
+     */
+    public URI setTracks(boolean b) {
+        if(b == true) {
+        	KMLRecorder.Config config = mKMLRecorder.new Config(
+        										mPref.clearListOnStart(),
+        										mPref.getTrackUpdateTime(),
+        										mPref.useDetailedPositionReporting(),
+        										Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "Avare" + File.separatorChar + "Tracks",
+        										mPref.getTrackUpdateSpeed());
+        	mKMLRecorder.start(config);
+        	return null;
+        }
+        else
+        	return mKMLRecorder.stop();
+    }
+
+    /**
+     * Are we currently saving the location information
+     * @return Boolean to indicate whether we are actively writing tracks
+     */
+    public boolean getTracks() {
+        return mKMLRecorder.isRecording();
     }
 }

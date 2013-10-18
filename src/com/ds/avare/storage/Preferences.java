@@ -575,4 +575,31 @@ public class Preferences {
         return(mPref.getString(name, null));
     }
 
+    public boolean shouldDrawTracks() {
+        return(mPref.getBoolean(mContext.getString(R.string.TrkUpdShowHistory), false));
+    }
+
+    public boolean useDetailedPositionReporting() {
+        return(mPref.getBoolean(mContext.getString(R.string.UseDetailedPositionReporting), false));
+    }
+
+    public boolean clearListOnStart() {
+        return(mPref.getBoolean(mContext.getString(R.string.ClearListOnStart), false));
+    }
+
+    public int getTrackUpdateTime() {
+    	try {
+    		return(Integer.parseInt(mPref.getString(mContext.getString(R.string.TrkUpdTim), "15")));
+    	} catch (NumberFormatException x) {
+    		return 15;
+    	}
+    }
+
+    public int getTrackUpdateSpeed() {
+    	try {
+    		return(Integer.parseInt(mPref.getString(mContext.getString(R.string.TrkUpdSpd), "5")));
+		} catch (NumberFormatException x) {
+			return 5;
+		}
+    }
 }
