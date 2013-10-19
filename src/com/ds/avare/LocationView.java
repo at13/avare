@@ -1007,56 +1007,15 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 								runwayNumberCoordinatesX,
 								runwayNumberCoordinatesY);
 					}
-					/*
-					 *  Get the size of the text to draw and create a new
-					 *  rectangle of that size
-					 */
-					Rect rect = new Rect();
-					mRunwayPaint.getTextBounds(num, 0, num.length(), rect);
-					if (mPref.shouldShowBackground()) {
-						/*
-						 * If the "show background" preference is true, draw a
-						 * shaded square behind runway numbers to make them easier
-						 * to see. Perhaps there's a simpler way to do this? TODO:
-						 * Make this into a nice,rounded rectangle with a border
-						 */				
-			
-						/*
-						 *  Make that rectangle a little bigger to account for
-						 *  the shadow effect
-						 */
-						rect.set(0, 0, rect.width() + SHADOW * 3, rect.height()
-								+ SHADOW * 3);
-						mRunwayPaint.setShadowLayer(0, 0, 0, 0);
-						mRunwayPaint.setColor(TEXT_COLOR_OPPOSITE);
-						mRunwayPaint.setAlpha(0x7f);
-
-						/*
-						 * Draw the rectangle off the end of its associated
-						 * runway
-						 */
-						canvas.save();
-						canvas.translate(
-								runwayNumberCoordinatesX - (rect.width() / 2),
-								runwayNumberCoordinatesY - (rect.height() / 2));
-						canvas.drawRect(rect, mRunwayPaint);
-						canvas.restore();
-
-					}
-					mRunwayPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
-					mRunwayPaint.setColor(TEXT_COLOR);
-					mRunwayPaint.setAlpha(0xff);
-					mRunwayPaint.setTextAlign(Paint.Align.CENTER);
 
 					/*
 					 * Draw the text so it's centered within the shadow
                      * rectangle, which is itself centered at the end of the
                      * extended runway centerline
 					 */
-					canvas.drawText(num,
+					drawShadowedText(canvas, num, mRunwayPaint.getTextSize(),
 							runwayNumberCoordinatesX,
-							runwayNumberCoordinatesY
-									+ (rect.height() / 2 - SHADOW * 2), mRunwayPaint);
+							runwayNumberCoordinatesY);
 					if (mTrackUp) {
 						canvas.restore();
 					}
@@ -1103,17 +1062,18 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         	float ring2R = (float)(Ring2x[ringScale] * scaleFactor * distanceFactor);
         	float ring3R = (float)(Ring3x[ringScale] * scaleFactor * distanceFactor);
         	
-        	mPaint.setStrokeWidth(5);
-        	mPaint.setStyle(Paint.Style.STROKE);
-        	mPaint.setColor(Color.WHITE);
-        	mPaint.setAlpha(225);
-        	canvas.drawCircle(x, y, ring1R, mPaint);
-        	canvas.drawCircle(x, y, ring2R, mPaint);
-        	canvas.drawCircle(x, y, ring3R, mPaint);
+        	Paint ringPaint = new Paint(mPaint);
+        	ringPaint.setStrokeWidth(5);
+        	ringPaint.setStyle(Paint.Style.STROKE);
+        	ringPaint.setColor(Color.WHITE);
+        	ringPaint.setAlpha(225);
+        	canvas.drawCircle(x, y, ring1R, ringPaint);
+        	canvas.drawCircle(x, y, ring2R, ringPaint);
+        	canvas.drawCircle(x, y, ring3R, ringPaint);
 
-    		drawShadowedText(canvas, mPaint, Ring1Text[ringScale], x + ring1R, y);
-    		drawShadowedText(canvas, mPaint, Ring2Text[ringScale], x + ring2R, y);
-    		drawShadowedText(canvas, mPaint, Ring3Text[ringScale], x + ring3R, y);
+    		drawShadowedText(canvas, Ring1Text[ringScale], 35, x + ring1R, y);
+    		drawShadowedText(canvas, Ring2Text[ringScale], 35, x + ring2R, y);
+    		drawShadowedText(canvas, Ring3Text[ringScale], 35, x + ring3R, y);
         }
     }
 
@@ -1126,11 +1086,12 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
      * @param x center position of the text on the canvas
      * @param y top edge of text on the canvas
      */
-    private void drawShadowedText(Canvas canvas, Paint paint, String text, float x, float y) {
-    	Paint textPaint = new Paint(paint);
+    private void drawShadowedText(Canvas canvas, String text, float height, float x, float y) {
+    	Paint textPaint = new Paint();
+    	textPaint.setTypeface(mFace);
     	textPaint.setColor(TEXT_COLOR);
     	textPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
-    	textPaint.setTextSize(35);
+    	textPaint.setTextSize(height);
     	textPaint.setStyle(Paint.Style.FILL);
 
     	Rect textSize = new Rect();
