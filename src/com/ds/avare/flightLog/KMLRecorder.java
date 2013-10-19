@@ -177,12 +177,12 @@ public class KMLRecorder {
     			if(mConfig.mUseDetailedPositionReporting == true) {
 	    			// Write out each track point of this flight as its own entry. This
 	    			// saves out more detail than just lat/long of the point.
-	    			for(int idx = mFlightStartIndex; idx < mPositionHistory.size(); idx++) {
+	    			for(int idx = mFlightStartIndex, max = mPositionHistory.size(); idx < max; idx++) {
 						GpsParams gpsParams = mPositionHistory.get(idx);
 						String trackPoint = String.format(KMLTRACKPOINT,
 								idx + 1,
 	    						new Date(gpsParams.getTime()).toString(),
-	    						gpsParams.getAltitude() * .3048,
+	    						gpsParams.getAltitude(),
 	    						gpsParams.getBearing(),
 	    						gpsParams.getSpeed(),
 	    						gpsParams.getLongitude(),
