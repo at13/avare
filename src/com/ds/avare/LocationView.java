@@ -54,6 +54,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.text.TextPaint;
@@ -1066,14 +1067,15 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
 
     /**
      * Draws concentric circles around the current aircraft position showing distance.
-     * @param canvas
+     * 
+     * @param canvas upon which to draw the circles
      */
     private void drawDistanceRings(Canvas canvas) {
-    	final int Ring1x[] = { 320, 160,  80,  40};	// Calibrated values for showing nautical miles
-    	final int Ring2x[] = { 640, 320, 160,  80};
+    	final int Ring1x[] = { 320, 160,  64,  32};	// Calibrated values for showing nautical miles
+    	final int Ring2x[] = { 640, 320, 160,  64};
     	final int Ring3x[] = {1280, 640, 320, 160};
-    	final String Ring1Text[] = {"10", "5",  "2.5", "1.25"};
-    	final String Ring2Text[] = {"20", "10", "5",   "2.5"};
+    	final String Ring1Text[] = {"10", "5",  "2", "1"};
+    	final String Ring2Text[] = {"20", "10", "5",   "2"};
     	final String Ring3Text[] = {"40", "20", "10",  "5"};
 
     	double distanceFactor = 1;
@@ -1083,7 +1085,7 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
     		distanceFactor = 1 / 1.852;	// adjust for nm to kilometers
     	}
     	
-        if(mPref.showDistanceRings() != false) {
+        if((mPref.showDistanceRings() != false) && (null == mPointProjection)) {
             float x = (float)(mOrigin.getOffsetX(mGpsParams.getLongitude()));
             float y = (float)(mOrigin.getOffsetY(mGpsParams.getLatitude()));                        
             float scaleFactor = mScale.getScaleFactor();
@@ -1104,31 +1106,50 @@ public class LocationView extends View implements MultiTouchObjectCanvas<Object>
         	mPaint.setStrokeWidth(5);
         	mPaint.setStyle(Paint.Style.STROKE);
         	mPaint.setColor(Color.WHITE);
-        	mPaint.setAlpha(200);
+        	mPaint.setAlpha(225);
         	canvas.drawCircle(x, y, ring1R, mPaint);
         	canvas.drawCircle(x, y, ring2R, mPaint);
         	canvas.drawCircle(x, y, ring3R, mPaint);
-        	mPaint.setColor(TEXT_COLOR);
-        	mPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
-        	float oldSize = mPaint.getTextSize();
-        	mPaint.setTextSize(45);
-        	mPaint.setStyle(Paint.Style.FILL);
 
-        	if(null == mPointProjection) {
-        		// Only draw the text if we are not "pinching"
-            	Rect textSize = new Rect();
-	        	mPaint.getTextBounds(Ring1Text[ringScale], 0, Ring1Text[ringScale].length(), textSize);
-	        	canvas.drawText(Ring1Text[ringScale], x + ring1R - (textSize.right / 2),  y, mPaint);
-	
-	            mPaint.getTextBounds(Ring2Text[ringScale], 0, Ring2Text[ringScale].length(), textSize);
-	        	canvas.drawText(Ring2Text[ringScale],  x + ring2R - (textSize.right / 2), y, mPaint);
-	
-	            mPaint.getTextBounds(Ring3Text[ringScale], 0, Ring3Text[ringScale].length(), textSize);
-	            canvas.drawText(Ring3Text[ringScale],  x + ring3R - (textSize.right / 2), y, mPaint);
-        	}
-        	
-        	mPaint.setTextSize(oldSize);
+    		drawShadowedText(canvas, mPaint, Ring1Text[ringScale], x + ring1R, y);
+    		drawShadowedText(canvas, mPaint, Ring2Text[ringScale], x + ring2R, y);
+    		drawShadowedText(canvas, mPaint, Ring3Text[ringScale], x + ring3R, y);
         }
+    }
+
+    /**
+     * Display the text in the indicated paint with a shadow'd background. This aids in readability.
+     * 
+     * @param canvas where to draw
+     * @param paint to use for displaying the text
+     * @param text what to display
+     * @param x center position of the text on the canvas
+     * @param y top edge of text on the canvas
+     */
+    private void drawShadowedText(Canvas canvas, Paint paint, String text, float x, float y) {
+    	Paint textPaint = new Paint(paint);
+    	textPaint.setColor(TEXT_COLOR);
+    	textPaint.setShadowLayer(SHADOW, SHADOW, SHADOW, Color.BLACK);
+    	textPaint.setTextSize(35);
+    	textPaint.setStyle(Paint.Style.FILL);
+
+    	Rect textSize = new Rect();
+    	RectF shadowBox = new RectF(textSize);
+
+    	Paint shadowPaint = new Paint(textPaint);
+    	shadowPaint.setShadowLayer(0, 0, 0, 0);
+    	shadowPaint.setColor(TEXT_COLOR_OPPOSITE);
+    	shadowPaint.setAlpha(0x7f);
+    	shadowPaint.setStyle(Style.FILL);
+
+    	textPaint.getTextBounds(text, 0, text.length(), textSize);
+    	shadowBox.bottom = textSize.bottom + 10 + y;
+    	shadowBox.top    = textSize.top - 10 + y;
+    	shadowBox.left   = textSize.left - 20 + x  - (textSize.right / 2);
+    	shadowBox.right  = textSize.right + 20 + x  - (textSize.right / 2);
+
+    	canvas.drawRoundRect(shadowBox, 20, 20, shadowPaint);
+    	canvas.drawText(text,  x - (textSize.right / 2), y, textPaint);
     }
 
     /**
